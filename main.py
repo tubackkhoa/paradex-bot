@@ -80,3 +80,7 @@ def check_balance(exchange: BaseExchange, max_size: Decimal):
 
 if __name__ == '__main__':
     asyncio.run(main())
+
+
+def start():
+    asyncio.run(main())    
