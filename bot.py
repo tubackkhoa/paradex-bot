@@ -11,7 +11,7 @@ import threading
 from datetime import datetime, timedelta
 from decimal import Decimal
 from dotenv import load_dotenv
-from paradex_py import Paradex
+from paradex_py import ParadexSubkey, Paradex
 from paradex_py.environment import Environment
 from paradex_py.common.order import Order, OrderType, OrderSide
 import time
@@ -21,9 +21,10 @@ load_dotenv()
 class ParadexVolumeBot:
     def __init__(self):
         # ===== API Configuration =====
-        self.l2_private_key = os.getenv('L2_PRIVATE_KEY')
-        self.l1_private_key = os.getenv('L1_PRIVATE_KEY')
         self.l1_address = os.getenv('L1_ADDRESS')
+        self.l1_private_key = os.getenv('L1_PRIVATE_KEY')
+        self.l2_private_key = os.getenv('L2_PRIVATE_KEY')        
+        self.l2_address = os.getenv('L2_ADDRESS')
         self.environment = os.getenv('ENVIRONMENT', 'TESTNET').upper()
         
         # ===== Market & Trading Settings =====
@@ -88,12 +89,19 @@ class ParadexVolumeBot:
         env = TESTNET if self.environment == 'TESTNET' else PROD
         
         try:
-            self.paradex = Paradex(
-                env=env,
-                l1_address=self.l1_address,
-                l2_private_key=self.l2_private_key,
-                l1_private_key=self.l1_private_key
-            )
+
+            if self.l2_address is None or self.l2_private_key is None:
+                self.paradex = Paradex(
+                    env=env,
+                    l1_address=self.l1_address,
+                    l1_private_key=self.l1_private_key,                
+                )        
+            else:
+                self.paradex = ParadexSubkey(
+                    env=env,
+                    l2_address=self.l2_address,
+                    l2_private_key=self.l2_private_key,                
+                )            
             
             # Check if account is onboarded
             print(f"🔐 Checking account status...")
@@ -127,7 +135,7 @@ class ParadexVolumeBot:
         print(f"{'='*75}")
         print(f"Environment: {self.environment}")
         print(f"Market: {self.market}")
-        print(f"Account: {self.l1_address[:10]}...{self.l1_address[-8:]}")
+        print(f"Account: {self.l2_address[:10]}...{self.l2_address[-8:]}")
         print(f"Investment: ${self.investment:.2f} (Leverage: {self.leverage}x)")
         print(f"Effective Capital: ${self.investment * self.leverage:.2f}")
         print(f"\n🎯 TARGETS:")
